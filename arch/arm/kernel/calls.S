@@ -387,6 +387,13 @@
 /* 375 */	CALL(sys_setns)
 		CALL(sys_process_vm_readv)
 		CALL(sys_process_vm_writev)
+		CALL(sys_ni_syscall) /* 378 */
+		CALL(sys_ni_syscall) /* 379: finit_module not backported */
+		CALL(sys_ni_syscall) /* 380 */
+		CALL(sys_ni_syscall) /* 381 */
+		CALL(sys_ni_syscall) /* 382 */
+		CALL(sys_seccomp)    /* 383 */
+		CALL(sys_getrandom)  /* 384 */
 #ifndef syscalls_counted
 .equ syscalls_padding, ((NR_syscalls + 3) & ~3) - NR_syscalls
 #define syscalls_counted

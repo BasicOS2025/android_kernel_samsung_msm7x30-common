@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- These three repositories do not supply the missing legacy userspace HAL ports. -->
+<manifest>
+    <remote name="basicos2025-ancora" fetch="https://github.com/BasicOS2025/" />
+    <project name="android_device_samsung_ancora"
+             path="device/samsung/ancora"
+             remote="basicos2025-ancora" revision="refs/heads/lineage-15.1" />
+    <project name="android_vendor_samsung_ancora"
+             path="vendor/samsung/ancora"
+             remote="basicos2025-ancora" revision="refs/heads/lineage-15.1" />
+    <project name="android_kernel_samsung_msm7x30-common"
+             path="kernel/samsung/msm7x30-common"
+             remote="basicos2025-ancora" revision="refs/heads/lineage-15.1" />
+</manifest>

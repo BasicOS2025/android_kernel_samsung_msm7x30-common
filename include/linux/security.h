@@ -141,7 +141,8 @@ struct sched_param;
 struct request_sock;
 
 /* bprm->unsafe reasons */
-#define LSM_UNSAFE_SHARE	1
+#define LSM_UNSAFE_NO_NEW_PRIVS	8
+#define LSM_UNSAFE_SHARE		1
 #define LSM_UNSAFE_PTRACE	2
 #define LSM_UNSAFE_PTRACE_CAP	4
 

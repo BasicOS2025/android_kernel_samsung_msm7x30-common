@@ -1259,6 +1259,9 @@ static int check_unsafe_exec(struct linux_binprm *bprm)
 	unsigned n_fs;
 	int res = 0;
 
+	if (task_no_new_privs(p))
+		bprm->unsafe |= LSM_UNSAFE_NO_NEW_PRIVS;
+
 	if (p->ptrace) {
 		if (p->ptrace & PT_PTRACE_CAP)
 			bprm->unsafe |= LSM_UNSAFE_PTRACE_CAP;
@@ -1309,7 +1312,8 @@ int prepare_binprm(struct linux_binprm *bprm)
 	bprm->cred->euid = current_euid();
 	bprm->cred->egid = current_egid();
 
-	if (!(bprm->file->f_path.mnt->mnt_flags & MNT_NOSUID)) {
+	if (!(bprm->file->f_path.mnt->mnt_flags & MNT_NOSUID) &&
+	    !task_no_new_privs(current)) {
 		/* Set-uid? */
 		if (mode & S_ISUID) {
 			bprm->per_clear |= PER_CLEAR_ON_SETID;

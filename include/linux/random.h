@@ -46,6 +46,10 @@ struct rnd_state {
 
 /* Exported functions */
 
+/* Flags for getrandom(2). */
+#define GRND_NONBLOCK 0x0001
+#define GRND_RANDOM   0x0002
+
 #ifdef __KERNEL__
 
 extern void add_device_randomness(const void *, unsigned int);

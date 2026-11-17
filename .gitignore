@@ -98,3 +98,6 @@ arch/arm/boot/compressed/vmlinux
 # ignore initramfs
 initramfs
 /*.sh
+
+# Default output directory of tools/testing/ancora-oreo/build.sh
+/out-ancora/

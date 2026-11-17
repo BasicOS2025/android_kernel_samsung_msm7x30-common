@@ -1,0 +1,32 @@
+Ancora Oreo kernel build verification
+
+Base: arco/samsung-kernel-msm7x30 cm-12.0 b157ddfd3a28f6e6b2dca4acfc8fcbd0ad684489
+Reference: LineageOS/android_kernel_samsung_msm8930-common lineage-15.1 450bc883eabe96426af15d032ddda86572fc319c
+Compiler: AOSP arm-eabi GCC 4.8 lollipop-release 26e93f6af47f7bd3a9beb5c102a5f45e19bfa38a
+Host compiler: GCC 14; HOSTCFLAGS=-O2 -fcommon
+Kernel release: 3.4.107-cyanogenmod-gb157ddfd-dirty
+
+Commands:
+  KERNEL_OUT=/workspace/kernel-build-ancora CROSS_COMPILE=/workspace/toolchains/arm-eabi-4.8/bin/arm-eabi- JOBS=3 bash tools/testing/ancora-oreo/build.sh
+
+PASS: complete zImage and modules build, exit 0.
+PASS: headers_install and static ARM smoke-program cross-compilation, exit 0.
+PASS: 18 resolved Ancora/Oreo configuration requirements.
+PASS: zImage embedded .config matches build .config byte for byte.
+PASS: ARM zImage magic.
+PASS: linked sys_seccomp, sys_getrandom, avc_has_extended_perms, cap_task_prctl.
+PASS: smoke executable has no undefined symbols.
+PASS: three ELF32/ARM kernel modules match the kernel release.
+PASS: git diff --check, build.sh syntax, local-manifest XML parsing.
+
+The legacy tree still emits compiler warnings; the build is not warning-free.
+NOT TESTED: boot, hardware, on-device smoke program, multi-thread TSYNC,
+Binder SG/FD/context isolation at runtime, SELinux policy loading and CTS/VTS.
+
+Artifacts (relative to KERNEL_OUT; bytes and SHA-256):
+arch/arm/boot/zImage | 3174096 | f3ebdb4b73a7d333f7aba049844072e53f9d33c01b2c8d9ac347f80f0a92cb41
+ancora-oreo-smoke | 35554 | 47081d0ca44c0ebd741e9734794b119c312a0dcfd085cd37fa16da5aabe010dc
+.config | 94553 | 1afb2d2f125a9c64f308f5d0395ec9dee4673af79ecc711ffcf1445d0bdc581c
+drivers/net/wireless/bcmdhd/dhd.ko | 507919 | a9681e04bfdd87d33b9793f4cea9297a5d13d7d7b62b7fe775fd91ac1bde1729
+drivers/scsi/scsi_wait_scan.ko | 3326 | 89981084aed0106ddb66d60313330df6ac739f1bb733fd862a539d9dc5571ff5
+fs/cifs/cifs.ko | 300636 | 32c6c2ae83eff35b01f5c62d4ad669e745f48181936be3056b47b78f248376e6
