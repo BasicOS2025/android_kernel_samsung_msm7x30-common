@@ -10,6 +10,8 @@
 
 #include <linux/fcntl.h>
 #include <linux/fs.h>
+#include <linux/etherdevice.h>
+#include "dhd_custom_sec_mac.h"
 
 struct dhd_info;
 extern int _dhd_set_mac_address(struct dhd_info *dhd,
@@ -21,74 +23,41 @@ extern int _dhd_set_mac_address(struct dhd_info *dhd,
 #ifdef READ_MACADDR
 int dhd_read_macaddr(struct dhd_info *dhd, struct ether_addr *mac)
 {
-	struct file *fp      = NULL;
-	char macbuffer[18]   = {0};
-	mm_segment_t oldfs   = {0};
-	char randommac[3]    = {0};
-	char buf[18]         = {0};
-	char *filepath   = MACINFO;
-	int ret = 0;
+	struct file *fp;
+	char text[19] = { 0 };
+	mm_segment_t oldfs;
+	int count, ret;
 
-		fp = filp_open(filepath, O_RDONLY, 0);
-		if (IS_ERR(fp)) {
-start_readmac:
-			/* File Doesn't Exist. Create and write mac addr.*/
-			fp = filp_open(filepath, O_RDWR | O_CREAT, 0666);
-			if (IS_ERR(fp)) {
-			DHD_ERROR(("[WIFI] %s: File open error\n", filepath));
-				return -1;
-			}
-			oldfs = get_fs();
-			set_fs(get_ds());
-
-		/* Generating the Random Bytes for 3 last octects of the MAC address */
-			get_random_bytes(randommac, 3);
-
-			sprintf(macbuffer, "%02X:%02X:%02X:%02X:%02X:%02X\n",
-					0x00, 0x12, 0x34, randommac[0], randommac[1], randommac[2]);
-		DHD_ERROR(("[WIFI]The Random Generated MAC ID: %s\n", macbuffer));
-
-			if (fp->f_mode & FMODE_WRITE) {
-			ret = fp->f_op->write(fp, (const char *)macbuffer, sizeof(macbuffer), &fp->f_pos);
-				if (ret < 0)
-				DHD_ERROR(("[WIFI]MAC address [%s] Failed to write into File: %s\n", macbuffer, filepath));
-				else
-				DHD_ERROR(("[WIFI]MAC address [%s] written into File: %s\n", macbuffer, filepath));
-			}
-			set_fs(oldfs);
-		/* Reading the MAC Address from .mac.info file( the existed file or just created file)*/
-		ret = kernel_read(fp, 0, buf, 18);
-	} else {
-		/* Reading the MAC Address from .mac.info file( the existed file or just created file)*/
-		ret = kernel_read(fp, 0, buf, 18);
-/* to prevent abnormal string display when mac address is displayed on the screen. */
-		buf[17] = '\0';
-		DHD_ERROR(("Read MAC : [%s] [%d] \r\n" , buf, strncmp(buf , "00:00:00:00:00:00" , 17)));
-		if (strncmp(buf , "00:00:00:00:00:00" , 17) < 1) {
-			DHD_ERROR(("goto start_readmac \r\n"));
-			filp_close(fp, NULL);
-			goto start_readmac;
-		}
+	fp = filp_open(MACINFO, O_RDONLY, 0);
+	if (!IS_ERR(fp)) {
+		count = kernel_read(fp, 0, text, sizeof(text) - 1);
+		filp_close(fp, NULL);
+		if (count > 0 && !dhd_parse_mac(text, count, mac->octet))
+			goto apply_mac;
 	}
 
-	if (ret)
-		sscanf(buf, "%02X:%02X:%02X:%02X:%02X:%02X",
-			   (unsigned int *)&(mac->octet[0]), (unsigned int *)&(mac->octet[1]),
-			   (unsigned int *)&(mac->octet[2]), (unsigned int *)&(mac->octet[3]),
-			   (unsigned int *)&(mac->octet[4]), (unsigned int *)&(mac->octet[5]));
-	else
-		DHD_ERROR(("dhd_bus_start: Reading from the '%s' returns 0 bytes\n", filepath));
-
-	if (fp)
+	/* Preserve a valid saved address; create a local unicast address otherwise. */
+	random_ether_addr(mac->octet);
+	count = scnprintf(text, sizeof(text), "%pM\n", mac->octet);
+	fp = filp_open(MACINFO, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+	if (!IS_ERR(fp)) {
+		oldfs = get_fs();
+		set_fs(get_ds());
+		ret = fp->f_op->write ?
+			fp->f_op->write(fp, text, count, &fp->f_pos) : -EINVAL;
+		set_fs(oldfs);
 		filp_close(fp, NULL);
+		if (ret != count)
+			DHD_ERROR(("[WIFI] Could not persist MAC address (%d)\n", ret));
+	} else {
+		DHD_ERROR(("[WIFI] Could not open MAC file for writing\n"));
+	}
 
-	/* Writing Newly generated MAC ID to the Dongle */
-	if (0 == _dhd_set_mac_address(dhd, 0, mac))
-		DHD_INFO(("dhd_bus_start: MACID is overwritten\n"));
-	else
-		DHD_ERROR(("dhd_bus_start: _dhd_set_mac_address() failed\n"));
-
-	return 0;
+apply_mac:
+	ret = _dhd_set_mac_address(dhd, 0, mac);
+	if (ret)
+		DHD_ERROR(("[WIFI] _dhd_set_mac_address failed (%d)\n", ret));
+	return ret;
 }
 #endif /* READ_MACADDR */
 
@@ -98,16 +67,14 @@ int dhd_write_macaddr(struct ether_addr *mac)
     char *filepath_data      = MACINFO;
 
 	struct file *fp_mac = NULL;
-	char buf[18]      = {0};
+	char buf[19]      = {0};
 	mm_segment_t oldfs    = {0};
 	int ret = -1;
 	int retry_count = 0;
 
 startwrite:
 
-	sprintf(buf, "%02X:%02X:%02X:%02X:%02X:%02X\n",
-			mac->octet[0], mac->octet[1], mac->octet[2],
-			mac->octet[3], mac->octet[4], mac->octet[5]);
+	scnprintf(buf, sizeof(buf), "%pM\n", mac->octet);
 
 	/* File will be created /data/.mac.info. */
 	fp_mac = filp_open(filepath_data, O_RDWR | O_CREAT, 0666);
@@ -121,7 +88,7 @@ startwrite:
 
 		if (fp_mac->f_mode & FMODE_WRITE) {
 			ret = fp_mac->f_op->write(fp_mac, (const char *)buf,
-				sizeof(buf), &fp_mac->f_pos);
+				strlen(buf), &fp_mac->f_pos);
 			if (ret < 0)
 				DHD_ERROR(("[WIFI] Mac address [%s] Failed to"
 				" write into File: %s\n", buf, filepath_data));
@@ -134,6 +101,8 @@ startwrite:
 	}
 	/* check .mac.info file is 0 byte */
 	fp_mac = filp_open(filepath_data, O_RDONLY, 0);
+	if (IS_ERR(fp_mac))
+		return PTR_ERR(fp_mac);
 	ret = kernel_read(fp_mac, 0, buf, 18);
 
 	if ((ret == 0) && (retry_count++ < 3)) {

@@ -1,0 +1,18 @@
+Ancora Wi-Fi MAC regression build
+
+Kernel release: 3.4.107-cyanogenmod-gf5c45668-dirty
+
+PASS: GCC 4.8 full zImage and three-module build, exit 0.
+PASS: host MAC parser tests under AddressSanitizer + UndefinedBehaviorSanitizer.
+PASS: saved address, high-octet and malformed-input cases; 100000 bounded inputs.
+PASS: embedded kernel config equals the resolved build config.
+PASS: 18 resolved Oreo/Ancora config checks.
+PASS: ARM zImage header and matching dhd module vermagic.
+
+NOT TESTED: physical-device boot, firmware loading, WLAN association or touchscreen.
+
+SHA-256 / bytes:
+arch/arm/boot/zImage | 3174312 | 28e7dc215b7b3015b46cc3c90a78ae00845eea993761e2fcf63184c9ae813ee9
+drivers/net/wireless/bcmdhd/dhd.ko | 507649 | 39af750c0baaeaccbade3d70cc1dbb32dfe34579fcf543acd06d875e0b6b8f85
+drivers/scsi/scsi_wait_scan.ko | 3326 | 4d4b1a347fb371650ef95a4d218b4432a8e3151a69627986f828cd65db18d48a
+fs/cifs/cifs.ko | 300636 | a53fa45018b9da4074fba89dc23af7b0de6626ea5cdd7b803203197943889747

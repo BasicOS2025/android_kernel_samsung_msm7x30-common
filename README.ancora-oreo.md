@@ -52,6 +52,10 @@ were not imported. Existing copyright/license notices remain in the sources.
 - `getrandom(2)` at ARM EABI syscall 384, with initialization waiting,
   nonblocking/error semantics and public flags. Existing entropy accounting
   is retained rather than replacing the RNG with an unrelated subsystem.
+- BCM4329 MAC handling validates each octet without wide `sscanf` writes into
+  a six-byte array. Existing valid addresses are retained; missing or malformed
+  files get a locally administered unicast address. Formatting reserves space
+  for the newline and terminator, and file-read failures are checked.
 - `ancora_defconfig` enables the new interfaces, file handles and config
   introspection, and sets SELinux `checkreqprot` to 0. Enforcing checks are
   not bypassed. The existing SELinux development-mode configuration remains.
@@ -83,6 +87,20 @@ The script builds `zImage` and modules, installs userspace headers and compiles
 the static ARM smoke-test program. It checks the **resolved** `.config`, not
 just the text in `ancora_defconfig`. Build results are recorded separately in
 `Documentation/ancora-oreo-build.txt`.
+The additional Wi-Fi MAC regression build is recorded in
+`Documentation/ancora-wifi-mac-build.txt`.
+
+The MAC parser regression test can also run on the build host:
+
+```sh
+cc -std=c99 -Wall -Wextra -Werror -O1 -g -fsanitize=address,undefined \
+  tools/testing/ancora-oreo/mac-test.c -o /tmp/ancora-mac-test
+/tmp/ancora-mac-test
+```
+
+This checks valid saved addresses, high-bit octets, malformed/multicast/zero
+addresses, destination guard bytes and 100,000 bounded inputs. It does not test
+Wi-Fi firmware loading or association on the actual phone.
 
 ## On-device checks still required
 

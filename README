@@ -3,6 +3,7 @@ Samsung Galaxy W (ancora) — Android 8.1 / LineageOS 15.1 development kernel
 
 Port details, build instructions and limitations: README.ancora-oreo.md
 Build verification: Documentation/ancora-oreo-build.txt
+Wi-Fi MAC regression build: Documentation/ancora-wifi-mac-build.txt
 Cross-compilation has been performed; physical-device boot is not verified.
 
 Original Linux kernel README follows.
